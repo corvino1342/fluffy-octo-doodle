@@ -23,12 +23,16 @@ def save_tiles(img, msk, out_dir, img_name):
             mask_tile.save(out_dir + f'_labels/{img_name}_{count}.tif')
     print(f'{img_name} DONE! --- tiles skipped: {skipped}/{count} ({(100 * skipped/count):.1f}%)')
 
-training_maps = ['22678915_15', '22678930_15', '22678945_15',
-                 '22678960_15', '22678975_15', '22678990_15']
 
-validation_maps = ['22978945_15']
 
-testing_maps = ['22828930_15', '22828990_15']
+training_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/train/'))
+validation_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/val/'))
+testing_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/test/'))
+
+training_maps = training_maps[:20]          # max 137
+validation_maps = validation_maps[:2]      # max 4
+testing_maps = testing_maps[:2]            # max 10
+
 
 tile_measure = 128
 width, height = (1500, 1500)
@@ -47,7 +51,6 @@ for name in training_maps:
 
 # VALIDATION
 print('VALIDATION MAPS')
-
 for name in validation_maps:
 
     os.makedirs('datasets/tiles/val/', exist_ok=True)
@@ -60,7 +63,6 @@ for name in validation_maps:
 
 # TESTING
 print('TESTING MAPS')
-
 for name in testing_maps:
 
     os.makedirs('datasets/tiles/test/', exist_ok=True)
