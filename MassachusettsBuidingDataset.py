@@ -76,8 +76,10 @@ def tiles_creation(dataset_name, tile_measure, maps_to_use):
                     if gt:
                         mask_tile = mask.crop(box)
 
-                        if mask_tile.size != (tile_measure, tile_measure) or mask_tile.getextrema() == ((0, 0), (0, 0),
-                                                                                                        (0, 0)):
+                        if (mask_tile.size != (tile_measure, tile_measure) or
+                            mask_tile.getextrema() == ((0, 0), (0, 0), (0, 0)) or
+                            mask_tile.getextrema() == (0, 0)):                      # VERIFICARE COME MAI I DUE DATASET SALVANO IN MODO DIVERSO LE MASCHERE, UNO RGB E UNA BW
+
                             skipped += 1
                             continue
                     image_tile = image.crop(box)
@@ -87,9 +89,11 @@ def tiles_creation(dataset_name, tile_measure, maps_to_use):
             print(f'{name} DONE! --- tiles skipped: {skipped}/{count} ({(100 * skipped / count):.1f}%)\n\n')
 
 
-
+# DEVO PROVARE A CALCOLARE LA MEDIA DEL VALORE DELLE MASCHERE PER CAPIRE SE SONO BILANCIATI I DATI
+# QUINDI, FARE TIPO LA SOMMA SUI PIXEL DELLE MASCHERE E POI DIVIDERE PER LA DIMENSIONE DELLA TILE. SE IL RISULTATO È CIRCA 0.5
+# ALLORA POSSO PENSARE CHE IL DATASET SIA BILANCIATO, CREDO
 
 dataset_name = 'MassachusettsBuildingsDataset'
 dataset_name = 'AerialImageDataset'
 clear_tiles_directory(dataset_name)
-tiles_creation(dataset_name, tile_measure=256, maps_to_use=3)
+tiles_creation(dataset_name, tile_measure=256, maps_to_use=1)
