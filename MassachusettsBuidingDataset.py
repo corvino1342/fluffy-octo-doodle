@@ -3,9 +3,11 @@ import os
 import shutil
 
 def clear_tiles_directory(dataset_name):
-    if os.path.exists(f'{dataset_name}/tiles'):
-        shutil.rmtree(f'{dataset_name}/tiles')
-    os.makedirs(f'{dataset_name}/tiles')
+    if os.path.exists(f'datasets/{dataset_name}/tiles'):
+        print('Previous tiles erasing...')
+        shutil.rmtree(f'datasets/{dataset_name}/tiles')
+        print('DONE!')
+    os.makedirs(f'datasets/{dataset_name}/tiles')
 
 def save_tiles(img, msk, out_dir, img_name, tile_measure, gt):
     count = 0
@@ -90,4 +92,4 @@ def tiles_creation(dataset_name, tile_measure, maps_to_use):
 dataset_name = 'MassachusettsBuildingsDataset'
 dataset_name = 'AerialImageDataset'
 clear_tiles_directory(dataset_name)
-tiles_creation(dataset_name, tile_measure=256, maps_to_use=2)
+tiles_creation(dataset_name, tile_measure=256, maps_to_use=3)
