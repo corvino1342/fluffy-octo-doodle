@@ -1,11 +1,20 @@
 from PIL import Image
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
+import shutil
 
-def save_tiles(img, msk, out_dir, img_name):
+def clear_tiles_directory(dataset_name):
+    if os.path.exists(f'{dataset_name}/tiles'):
+        shutil.rmtree(f'{dataset_name}/tiles')
+    os.makedirs(f'{dataset_name}/tiles')
+
+def save_tiles(img, msk, out_dir, img_name, tile_measure, gt):
     count = 0
     skipped = 0
+
+    height, width = img.size
+
+
+
     for i in range(0, height, tile_measure):
         for j in range(0, width, tile_measure):
             count += 1
@@ -16,59 +25,69 @@ def save_tiles(img, msk, out_dir, img_name):
             if mask_tile.size != (tile_measure, tile_measure) or mask_tile.getextrema() == ((0,0),(0,0),(0,0)):
                 skipped += 1
                 continue
-
             image_tile = img.crop(box)
-            image_tile.save(out_dir + f'/{img_name}_{count}.tiff')
-
-            mask_tile.save(out_dir + f'_labels/{img_name}_{count}.tif')
+            image_tile.save(out_dir + f'/images/{img_name}_{count}.tif')
+            if gt:
+                mask_tile.save(out_dir + f'/gt/{img_name}_{count}.tif')
     print(f'{img_name} DONE! --- tiles skipped: {skipped}/{count} ({(100 * skipped/count):.1f}%)')
 
+def tiles_creation(dataset_name, tile_measure, maps_to_use):
+
+    os.makedirs(f'datasets/{dataset_name}/tiles', exist_ok=True)
+
+    for dataset_type in ['train', 'val', 'test']:
+
+        print(f'Dataset type ------- {dataset_type}')
+
+        gt = True
+        if not os.path.exists(f'datasets/{dataset_name}/{dataset_type}/gt'):
+            print(f'---------{dataset_type} dataset has not Ground Truth---------')
+            gt = False
+
+        os.makedirs(f'datasets/{dataset_name}/tiles/{dataset_type}/', exist_ok=True)
+        os.makedirs(f'datasets/{dataset_name}/tiles/{dataset_type}/images', exist_ok=True)
+        os.makedirs(f'datasets/{dataset_name}/tiles/{dataset_type}/gt', exist_ok=True)
+
+        full_maps = sorted(os.path.splitext(f)[0] for f in os.listdir(f'datasets/{dataset_name}/{dataset_type}/images') if f.lower().endswith(('.tif', '.tiff', '.png', '.jpg')))
+
+        full_maps = full_maps[:maps_to_use]
 
 
-training_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/train/'))
-validation_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/val/'))
-testing_maps = sorted(os.path.splitext(f)[0] for f in os.listdir('datasets/massachusetts-buildings-dataset/tiff/test/'))
-
-training_maps = training_maps[:20]          # max 137
-validation_maps = validation_maps[:2]      # max 4
-testing_maps = testing_maps[:2]            # max 10
+        for name in full_maps:
 
 
-tile_measure = 128
-width, height = (1500, 1500)
+            image = Image.open(f'datasets/{dataset_name}/{dataset_type}/images/{name}.tif')
 
-# TRAINING
-print('TRAINING MAPS')
-for name in training_maps:
+            if gt:
+                mask = Image.open(f'datasets/{dataset_name}/{dataset_type}/gt/{name}.tif')
 
-    os.makedirs('datasets/tiles/train/', exist_ok=True)
-    os.makedirs('datasets/tiles/train_labels/', exist_ok=True)
+            count = 0
+            skipped = 0
 
-    image = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/train/{name}.tiff')
-    mask = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/train_labels/{name}.tif')
+            height, width = image.size
 
-    save_tiles(image, mask, 'datasets/tiles/train', name)
+            for i in range(0, height, tile_measure):
+                for j in range(0, width, tile_measure):
+                    count += 1
+                    box = (j, i, j + tile_measure, i + tile_measure)
 
-# VALIDATION
-print('VALIDATION MAPS')
-for name in validation_maps:
+                    if gt:
+                        mask_tile = mask.crop(box)
 
-    os.makedirs('datasets/tiles/val/', exist_ok=True)
-    os.makedirs('datasets/tiles/val_labels/', exist_ok=True)
+                        if mask_tile.size != (tile_measure, tile_measure) or mask_tile.getextrema() == ((0, 0), (0, 0),
+                                                                                                        (0, 0)):
+                            skipped += 1
+                            continue
+                    image_tile = image.crop(box)
+                    image_tile.save(f'datasets/{dataset_name}/tiles/{dataset_type}/images/{name}_{count}.tif')
+                    if gt:
+                        mask_tile.save(f'datasets/{dataset_name}/tiles/{dataset_type}/gt/{name}_{count}.tif')
+            print(f'{name} DONE! --- tiles skipped: {skipped}/{count} ({(100 * skipped / count):.1f}%)\n\n')
 
-    image = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/val/{name}.tiff')
-    mask = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/val_labels/{name}.tif')
 
-    save_tiles(image, mask, 'datasets/tiles/val', name)
 
-# TESTING
-print('TESTING MAPS')
-for name in testing_maps:
 
-    os.makedirs('datasets/tiles/test/', exist_ok=True)
-    os.makedirs('datasets/tiles/test_labels/', exist_ok=True)
-
-    image = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/test/{name}.tiff')
-    mask = Image.open(f'datasets/massachusetts-buildings-dataset/tiff/test_labels/{name}.tif')
-
-    save_tiles(image, mask, 'datasets/tiles/test', name)
+dataset_name = 'MassachusettsBuildingsDataset'
+dataset_name = 'AerialImageDataset'
+clear_tiles_directory(dataset_name)
+tiles_creation(dataset_name, tile_measure=256, maps_to_use=2)
