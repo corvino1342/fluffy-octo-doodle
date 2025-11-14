@@ -52,6 +52,8 @@ def tiles_creation(dataset_name, tile_measure, maps_to_use):
 
         full_maps = sorted(os.path.splitext(f)[0] for f in os.listdir(f'datasets/{dataset_name}/{dataset_type}/images') if f.lower().endswith(('.tif', '.tiff', '.png', '.jpg')))
 
+        print(f'Maps used in {dataset_type}: {maps_to_use}/{len(full_maps)}..................')
+
         full_maps = full_maps[:maps_to_use]
 
 
